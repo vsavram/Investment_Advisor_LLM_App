@@ -11,7 +11,7 @@ unstructured
 pypandoc
 unstructured[pdf]
 
-faiss-gpu
+faiss-cpu
 chromadb
 
 langchain-cohere
