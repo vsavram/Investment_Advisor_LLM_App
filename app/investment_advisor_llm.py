@@ -32,15 +32,13 @@ if not SERPER_API_KEY:
     
     
 def get_llm(temperature, model):
-  my_api_key = userdata.get('mgt802_key')
   return ChatOpenAI(
-    api_key=my_api_key,
+    api_key=OPENAI_API_KEY,
     model_name=model,
     temperature=temperature
   )
+llm = get_llm(temperature=0, model="gpt-4o")
 
-  llm = get_llm(temperature=0, model="gpt-4o")
-  
  
 #===========================================================================================
 # TOOLS
@@ -107,7 +105,7 @@ investment_manager = Agent(
               "of the expertise of your investment specialists, soliciting information from them to "
               "provide answers to client questions.",
     allow_delegation=False,
-    verbose=True,
+    verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
     llm = "gpt-4o"
 )
@@ -127,7 +125,7 @@ financial_advisor = Agent(
               "acknolwedge the uncertainty in achieving the stated objectives. ",
     tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
-    verbose=True,
+    verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
     llm = "gpt-4o"
 )
@@ -140,7 +138,7 @@ topic_agent = Agent(
               "by the given client. These could include specific references to companies, industries, or macro events. "
               "You receive instructions on what to do from the Investment Manager. ",
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     llm = "gpt-4o"
 )
 
@@ -158,7 +156,7 @@ news_agent = Agent(
               "from reputable sources. You make sure to provide references to the sources used.",
     tools=[search_tool, scrape_tool],
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     llm = "gpt-4o"
 )
 
@@ -176,7 +174,7 @@ quant_researcher = Agent(
               "or advice related to investment decisions.",
     tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
     llm = "gpt-4o"
 )
@@ -192,7 +190,7 @@ quant_reviewer = Agent(
               "competing theories on particular topics.",
     tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
     llm = "gpt-4o"
 )
@@ -205,7 +203,7 @@ data_analyst = Agent(
               "(ticker symbol or company name) you provide relevant information like price, volume, and market cap. "
               "You receive instructions on what to do from the Investment Manager or other investment specialists.",
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     llm = "gpt-4o"
 )
 
@@ -218,7 +216,7 @@ info_aggregator = Agent(
               "You are adept at consolidating this information into a response that a lay person would understand. "
               "You engage with clients in a polite and friendly manner.",
     allow_delegation=False,
-	  verbose=True,
+	  verbose=False,
     llm = "gpt-4o"
 )
 
