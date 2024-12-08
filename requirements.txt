@@ -22,3 +22,5 @@ yfinance
 crewai
 crewai_tools
 langchain_community
+
+mistune
