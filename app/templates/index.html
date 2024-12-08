@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Advisor LLM</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Investment Advisor</h1>
+        <form action="/query" method="post">
+            <textarea name="query" placeholder="Type your query here..." required></textarea>
+            <button type="submit">Submit</button>
+        </form>
+        {% if user_query %}
+        <div class="response">
+            <h2>Your Query:</h2>
+            <p>{{ user_query }}</p>
+            <h2>Response:</h2>
+            <p>{{ response }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
