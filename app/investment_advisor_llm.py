@@ -379,7 +379,7 @@ def process_query(query):
     """
     try:   
         # Kick off the workflow
-        response = crew.kickoff(inputs={"query": query})
+        response = crew.kickoff(inputs={"user_query": query})
         # Return the aggregated response from the Info Aggregator
         return response
     except Exception as e:
