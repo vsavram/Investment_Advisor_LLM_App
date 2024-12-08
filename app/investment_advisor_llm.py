@@ -1,4 +1,3 @@
-from google.colab import userdata, drive
 import os
 
 from langchain_openai import ChatOpenAI
