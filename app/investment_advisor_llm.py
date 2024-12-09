@@ -263,7 +263,8 @@ info_aggregator = Agent(
 # Define the initial task for handling user queries for Investment Manager
 manager_task = Task(
     description="Analyze the user's query: {user_query} and delegate tasks for "
-                "each agent that can help with the query.",
+                "each agent that can help with the query. Do not solicit data or " 
+                "news coverage unless user alludes to specific stocks, industries, or trends.",
     expected_output="A list of agents where each agent either has assigned tasks to complete "
                     "or is given the statement 'No work is needed'. "
                     "The output should be of the format: "
