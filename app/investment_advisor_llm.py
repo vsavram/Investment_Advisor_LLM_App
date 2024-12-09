@@ -154,7 +154,6 @@ financial_advisor = Agent(
               "You are cognizant of the risks associated with certain recommendations and "
               "acknolwedge the uncertainty in achieving the stated objectives. "
               "You work quickly and do not perform an exhaustive search for relevant information.",
-    tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
     verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
@@ -287,8 +286,7 @@ financial_advisor_task = Task(
 
 # Task for Topic Definition Agent
 define_topics = Task(
-    description="Analyze the user query: {user_query} and identify relevant topics"
-                "based on instructions from the Investment Manager.",
+    description="Identify relevant topics based on the instructions from the Investment Manager.",
     expected_output="A list of specific topics deemed relevant for news coverage."
                     "If the instructions state 'No work is needed', provide the "
                     "response: 'Did not need to complete any work'",
@@ -300,7 +298,7 @@ fetch_news = Task(
     description="Fetch and summarize recent financial news related to the provided topics from the Topic Agent.",
     expected_output="A concise summary of recent news about the provided topics where each topic is "
                     "given its own section and used news stories are referenced."
-                    "If the Data Analyst states 'Did not need to complete any work', "
+                    "If the Topic Definition Agent states 'Did not need to complete any work', "
                     "provide the response: 'Did not need to complete any work'",
     context=[define_topics],
     agent=news_agent,
@@ -342,8 +340,7 @@ fetch_stock_data = Task(
                     "If the instructions state 'No work is needed', provide the "
                     "response: 'Did not need to complete any work'",
     context=[infer_tickers_task],
-    agent=data_analyst,
-    function=lambda inputs: [get_yahoo_data(ticker) for ticker in inputs['output']]
+    agent=data_analyst
 )
 
 # Task for Quantitative Investment Specialist
@@ -360,7 +357,7 @@ quant_researcher_task = Task(
 quant_reviewer_task = Task(
     description="Analyze the response from the Quant Investment Specialist and revise the output.",
     expected_output="A revision that is has more clarity and accuracy. "
-                    "If the instructions state 'No work is needed', provide the "
+                    "If the Quant Investment Specialist states 'No work is needed', provide the "
                     "response: 'Did not need to complete any work'",
     context=[quant_researcher_task],
     agent=quant_reviewer,
