@@ -2,7 +2,7 @@ import os
 
 from langchain_openai import ChatOpenAI
 
-from crewai_tools import ScrapeWebsiteTool, SerperDevTool
+from crewai_tools import ScrapeWebsiteTool, SerperDevTool, tool
 from crewai import Agent, Task, Crew
 from crewai.process import Process
 
@@ -44,11 +44,11 @@ llm = get_llm(temperature=0, model="gpt-4o")
 # TOOLS
 #===========================================================================================
 
-# Initialize the web search and scrape tools
+# WEB SEARCH/SCRAPE
 search_tool = SerperDevTool()
 scrape_tool = ScrapeWebsiteTool()
 
-# Define the RAG capabilities (accessing investment-related papers)
+# RAG (accessing investment-related papers)
 
 # Load the investment-related papers
 loader = DirectoryLoader("docs", glob="**/*", loader_cls=PyPDFLoader)
@@ -85,6 +85,31 @@ rag_tool = Tool(
     description="Useful for answering questions by retrieving information from investment-related papers.",
     input_schema=rag_toolInput
 ) 
+
+# YAHOO FINANCE API
+
+# Function used to pull stock-related data from Yahoo Finance
+@tool("Get stock quote")
+def get_stock_data(ticker: str) -> dict:
+  """ Get data related to a given stock ticker. Returns current
+      price, day high/low, volume, market cap, PE ratio, and EPS.
+  """
+  try:
+      stock = yf.Ticker(ticker)
+      data = {
+          "ticker": ticker,
+          "current price": stock.info.get("currentPrice"),
+          "day high": stock.info.get("dayHigh"),
+          "day low": stock.info.get("dayLow"),
+          "volume": stock.info.get("volume"),
+          "market_cap": stock.info.get("marketCap"),
+          "PE ratio": stock.info.get("trailingPE"),
+          "EPS": stock.info.get("trailingEps")
+      }
+      return data
+  except Exception as e:
+      print(f"Error fetching data for {ticker}: {e}")
+      return None
 
 
 #===========================================================================================
@@ -212,6 +237,7 @@ data_analyst = Agent(
               "You receive instructions on what to do from the Investment Manager or other investment specialists. "
               "You opt to use the get_yahoo_data function to pull current stock-related data. "
               "You work quickly and do not perform an exhaustive search for relevant information.",
+    tools=[get_stock_data],
     allow_delegation=False,
 	verbose=False,
     llm = "gpt-4o"
@@ -309,26 +335,9 @@ infer_tickers_task = Task(
     function=infer_tickers_with_llm
 )
 
-# Function used to pull stock-related data from Yahoo Finance
-def get_yahoo_data(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        data = {
-            "current price": stock.info.get("currentPrice"),
-            "day high": stock.info.get("dayHigh"),
-            "day low": stock.info.get("dayLow"),
-            "volume": stock.info.get("volume"),
-            "market_cap": stock.info.get("marketCap"),
-            "PE ratio": stock.info.get("trailingPE"),
-            "EPS": stock.info.get("trailingEps")
-        }
-        return data
-    except Exception as e:
-        print(f"Error fetching data for {ticker}: {e}")
-        return None
 # Task for pulling relevant stock-related data from Yahoo Finance
 fetch_stock_data = Task(
-    description="Retrieve stock data for the necessary ticker symbols from Yahoo Finance using the get_yahoo_data function.",
+    description="Retrieve stock data for the necessary ticker symbols from Yahoo Finance using the Get Yahoo Finance Data function.",
     expected_output="A dictionary containing stock data (price, volume, etc). "
                     "If the instructions state 'No work is needed', provide the "
                     "response: 'Did not need to complete any work'",
