@@ -103,7 +103,12 @@ investment_manager = Agent(
               "You dynamically delegate tasks to your investment specialists. "
               "You engage with clients in a polite and friendly manner. You have intimate knowledge "
               "of the expertise of your investment specialists, soliciting information from them to "
-              "provide answers to client questions.",
+              "provide answers to client questions. "
+              "The investment specialists part of your team that you can delegate to are: "
+              "- Basic Financial Advisor: Can provide simple financial advice relatede to client goals and constraints "
+              "- Topic Agent: Helps define topics that are relayed to the New Coverage Agent if relevant news coverage is helpful "
+              "- Quant Investment Specialist: Can provide sophisticated insights for different investment strategies "
+              "- Data Analyst: Can pull relevent stock-related data (e.g. current price, volume, PE ratio)",
     allow_delegation=False,
     verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
@@ -122,7 +127,8 @@ financial_advisor = Agent(
               "income level. You pay close attention to the clarity of your advice, providing "
               "recommendations as easy to follow steps that a lay person would understand. "
               "You are cognizant of the risks associated with certain recommendations and "
-              "acknolwedge the uncertainty in achieving the stated objectives. ",
+              "acknolwedge the uncertainty in achieving the stated objectives. "
+              "You work quickly and do not perform an exhaustive search for relevant information.",
     tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
     verbose=False,
@@ -138,7 +144,7 @@ topic_agent = Agent(
               "by the given client. These could include specific references to companies, industries, or macro events. "
               "You receive instructions on what to do from the Investment Manager. ",
     allow_delegation=False,
-	  verbose=False,
+	verbose=False,
     llm = "gpt-4o"
 )
 
@@ -153,10 +159,11 @@ news_agent = Agent(
               "financial outlets. The news coverage you provide supplements advice provided "
               "by other investment specialists and helps inform clients about potential opportunites "
               "or risks. You are cognizant of the sources you use, ensuring that you pull information "
-              "from reputable sources. You make sure to provide references to the sources used.",
+              "from reputable sources. You make sure to provide references to the sources used. "
+              "You work quickly and do not perform an exhaustive search for relevant information.",
     tools=[search_tool, scrape_tool],
     allow_delegation=False,
-	  verbose=False,
+	verbose=False,
     llm = "gpt-4o"
 )
 
@@ -171,10 +178,11 @@ quant_researcher = Agent(
               "with the foundational investment knowledge (e.g. the efficient frontier, tangency portfolio, "
               "the CAPM, the Fama-French Five Factor Model, trading costs). You provide clear explanations "
               "of technical concepts when necessary. You either provide information related to general inquiries "
-              "or advice related to investment decisions.",
+              "or advice related to investment decisions. You work quickly and do not perform an "
+              "exhaustive search for relevant information.",
     tools=[search_tool, scrape_tool, rag_tool],
     allow_delegation=False,
-	  verbose=False,
+	verbose=False,
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True),
     llm = "gpt-4o"
 )
@@ -201,9 +209,11 @@ data_analyst = Agent(
     goal="You pull stock-related data from Yahoo Finance",
     backstory="You are adept at retrieving financial data from Yahoo Finance. When given a stock "
               "(ticker symbol or company name) you provide relevant information like price, volume, and market cap. "
-              "You receive instructions on what to do from the Investment Manager or other investment specialists.",
+              "You receive instructions on what to do from the Investment Manager or other investment specialists. "
+              "You opt to use the get_yahoo_data function to pull current stock-related data. "
+              "You work quickly and do not perform an exhaustive search for relevant information.",
     allow_delegation=False,
-	  verbose=False,
+	verbose=False,
     llm = "gpt-4o"
 )
 
@@ -216,7 +226,7 @@ info_aggregator = Agent(
               "You are adept at consolidating this information into a response that a lay person would understand. "
               "You engage with clients in a polite and friendly manner.",
     allow_delegation=False,
-	  verbose=False,
+	verbose=False,
     llm = "gpt-4o"
 )
 
@@ -227,25 +237,35 @@ info_aggregator = Agent(
 
 # Define the initial task for handling user queries for Investment Manager
 manager_task = Task(
-    description="Analyze the user's query: {user_query} and delegate tasks for each agent aside from the Info Aggregator.",
-    expected_output="A list of agents where each agent has assigned tasks to complete. "
-                    "The agents that you can provide tasks to are listed here: "
-                    "Basic Financial Advisor, Topic Definition Agent, Quant Investment Specialist, Data Analyst",
+    description="Analyze the user's query: {user_query} and delegate tasks for "
+                "each agent that can help with the query.",
+    expected_output="A list of agents where each agent either has assigned tasks to complete "
+                    "or is given the statement 'No work is needed'. "
+                    "The output should be of the format: "
+                    "- Basic Financial Advisor: tasks to complete or 'No work is needed' "
+                    "- Topic Definition Agent: tasks to complete or 'No work is needed' "
+                    "- Quant Investment Specialist: tasks to complete or 'No work is needed' "
+                    "- Data Analyst: tasks to complete or 'No work is needed'",
     agent=investment_manager,
 )
 
 # Task for Basic Financial Advisor
 financial_advisor_task = Task(
     description="Analyze the instructions from the Investment Manager and provide a detailed response.",
-    expected_output="A detailed response pertaining to the assigned tasks.",
+    expected_output="A detailed response pertaining to the assigned tasks. "
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     context=[manager_task],
     agent=financial_advisor,
 )
 
 # Task for Topic Definition Agent
 define_topics = Task(
-    description="Analyze the user query: {user_query} and identify relevant topics for news coverage.",
-    expected_output="A list of specific topics deemed relevant for news coverage.",
+    description="Analyze the user query: {user_query} and identify relevant topics"
+                "based on instructions from the Investment Manager.",
+    expected_output="A list of specific topics deemed relevant for news coverage."
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     agent=topic_agent,
 )
 
@@ -253,7 +273,9 @@ define_topics = Task(
 fetch_news = Task(
     description="Fetch and summarize recent financial news related to the provided topics from the Topic Agent.",
     expected_output="A concise summary of recent news about the provided topics where each topic is "
-    "given its own section and used news stories are referenced.",
+                    "given its own section and used news stories are referenced."
+                    "If the Data Analyst states 'Did not need to complete any work', "
+                    "provide the response: 'Did not need to complete any work'",
     context=[define_topics],
     agent=news_agent,
 )
@@ -279,7 +301,9 @@ def infer_tickers_with_llm(user_expression):
 # Task for determining ticker symbols
 infer_tickers_task = Task(
     description="Infer ticker symbols from instructions given from the Investment Manager.",
-    expected_output="A list of inferred ticker symbols.",
+    expected_output="A list of inferred ticker symbols. "
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     context=[manager_task],
     agent=data_analyst,
     function=infer_tickers_with_llm
@@ -304,17 +328,21 @@ def get_yahoo_data(ticker):
         return None
 # Task for pulling relevant stock-related data from Yahoo Finance
 fetch_stock_data = Task(
-    description="Retrieve stock data for the necessary ticker symbols from Yahoo Finance.",
-    expected_output="A dictionary containing stock data (price, volume, etc).",
+    description="Retrieve stock data for the necessary ticker symbols from Yahoo Finance using the get_yahoo_data function.",
+    expected_output="A dictionary containing stock data (price, volume, etc). "
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     context=[infer_tickers_task],
     agent=data_analyst,
-    function=get_yahoo_data
+    function=lambda inputs: [get_yahoo_data(ticker) for ticker in inputs['output']]
 )
 
 # Task for Quantitative Investment Specialist
 quant_researcher_task = Task(
     description="Analyze the instructions from the Investment Manager and provide a detailed response.",
-    expected_output="A detailed response pertaining to the assigned tasks.",
+    expected_output="A detailed response pertaining to the assigned tasks. "
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     context=[manager_task],
     agent=quant_researcher,
 )
@@ -322,7 +350,9 @@ quant_researcher_task = Task(
 # Task for Quantitative Investment Reviewer
 quant_reviewer_task = Task(
     description="Analyze the response from the Quant Investment Specialist and revise the output.",
-    expected_output="A revision that is has more clarity and accuracy.",
+    expected_output="A revision that is has more clarity and accuracy. "
+                    "If the instructions state 'No work is needed', provide the "
+                    "response: 'Did not need to complete any work'",
     context=[quant_researcher_task],
     agent=quant_reviewer,
 )
@@ -330,7 +360,7 @@ quant_reviewer_task = Task(
 # Task for Information Aggregator
 info_aggregator_task = Task(
     description="Analyze and aggregate the responses from the other agents, keeping only information related to the client query: {user_query}.",
-    expected_output="An cogent response that is easy to understand.",
+    expected_output="A cogent response that is easy to understand.",
     context=[financial_advisor_task, fetch_news, fetch_stock_data, quant_reviewer_task],
     agent=info_aggregator,
 )
