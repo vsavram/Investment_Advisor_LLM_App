@@ -371,22 +371,6 @@ crew = Crew(
 #===========================================================================================
 # PROCESSING FUNCTION
 #===========================================================================================
-
-def process_query(query):
-    """
-    Process the user's query and return a response as HTML.
-    """
-    try:
-        # Run the Crew workflow and get the Markdown response
-        markdown_response = crew.kickoff(inputs={"user_query": query})
-
-        # Convert the Markdown response to HTML
-        html_response = mistune.create_markdown()(markdown_response)
-        
-        return html_response
-    except Exception as e:
-        # Return error as plain text (optional: wrap in HTML)
-        return f"<p>An error occurred while processing your query: {str(e)}</p>"
     
 # Main processing function
 def process_query(query):
@@ -396,6 +380,11 @@ def process_query(query):
     try:   
         # Kick off the workflow
         response = crew.kickoff(inputs={"user_query": query})
+        # Extract the raw string output
+        if hasattr(response, "raw"):
+            response = response.raw
+        else:
+            raise ValueError("Invalid response format from crew.kickoff")
         # Convert the Markdown response to HTML
         response = mistune.create_markdown()(response)
         # Return the aggregated response from the Info Aggregator

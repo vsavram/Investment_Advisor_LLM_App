@@ -32,6 +32,11 @@
             border-radius: 4px;
         }
 
+        .form-controls {
+            display: flex;
+            align-items: center;
+        }
+
         button {
             background-color: #007bff;
             color: white;
@@ -57,13 +62,11 @@
 
         .response h2 {
             color: #333;
-            margin-bottom: 10px;
         }
 
         .loading {
             display: none; /* Hidden by default */
-            text-align: center;
-            margin-top: 20px;
+            margin-left: 10px;
         }
 
         .spinner {
@@ -89,14 +92,15 @@
     <div class="container">
         <h1>Investment Advisor LLM</h1>
         <h3>An LLM to help answer your investment-related questions, implement investment strategies, and reach your financial goals.</h3>
-        <form action="/query" method="post">
+        <form action="/query" method="post" id="query-form">
             <textarea name="query" placeholder="Type your query here..." required></textarea>
-            <button type="submit">Submit</button>
+            <div class="form-controls">
+                <button type="submit">Submit</button>
+                <div class="loading" id="loading-icon">
+                    <div class="spinner"></div>
+                </div>
+            </div>
         </form>
-        <div class="loading" id="loading-icon"></div>
-            <div class="spinner"></div>
-            <p>Processing your query, please wait...</p>
-        </div>
         {% if user_query %}
         <div class="response">
             <h2>Your Query:</h2>
@@ -113,8 +117,14 @@
         const form = document.getElementById("query-form");
         const loadingIcon = document.getElementById("loading-icon");
 
+        // Show loading icon on form submit
         form.addEventListener("submit", function () {
-            loadingIcon.style.display = "block";
+            loadingIcon.style.display = "inline-block";
+        });
+
+        // Hide loading icon on page load
+        window.addEventListener("load", function () {
+            loadingIcon.style.display = "none";
         });
     </script>
 </body>
